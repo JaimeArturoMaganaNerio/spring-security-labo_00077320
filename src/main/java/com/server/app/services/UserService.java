@@ -111,4 +111,41 @@ public class UserService {
       }
     });
   }
+
+
+  public User login(String username, String password) {
+    User user = userRepository.findUserByUsername(username)
+            .orElseThrow(() -> new com.server.app.exceptions.UnauthorizedException("Credenciales inválidas"));
+
+    if (!passwordEncoder.matches(password, user.getPassword())) {
+      throw new com.server.app.exceptions.UnauthorizedException("Credenciales inválidas");
+    }
+
+    if (user.isBlocked()) {
+      throw new com.server.app.exceptions.UnauthorizedException("Your account has been blocked");
+    }
+
+    if (!user.getRole().getActive()) {
+      throw new com.server.app.exceptions.UnauthorizedException("Your account role is not active");
+    }
+
+    return user;
+  }
+
+  @Transactional
+  public User updatePassword(int userId, String oldPassword, String newPassword, String confirmPassword) {
+    User user = findById(userId);
+
+    if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+      throw new com.server.app.exceptions.BadRequestException("La contraseña actual es incorrecta");
+    }
+
+    if (!newPassword.equals(confirmPassword)) {
+      throw new com.server.app.exceptions.BadRequestException("Las contraseñas nuevas no coinciden");
+    }
+
+    // Usamos el encode para encriptar la nueva contraseña
+    user.setPassword(passwordEncoder.encode(newPassword));
+    return userRepository.save(user);
+  }
 }

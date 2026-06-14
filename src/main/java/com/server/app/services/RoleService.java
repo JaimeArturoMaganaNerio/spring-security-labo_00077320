@@ -71,5 +71,14 @@ public class RoleService {
       role.setActive(dto.getActive());
     }
     return roleRepository.save(role);
+
+  }
+
+  @Transactional
+  public void delete(Long id) {
+    Role role = roleRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Role not found"));
+
+    roleRepository.delete(role);
   }
 }
